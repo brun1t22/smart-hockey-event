@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
+        /* Diseño oscuro y moderno */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -47,7 +48,7 @@
         }
 
         .logo-seccion h1 span {
-            color: #2f80ed;
+            color: #2f80ed; /* Azul Smart Hockey */
         }
 
         .logo-seccion p {
@@ -68,6 +69,7 @@
             margin-bottom: 15px;
         }
 
+        /* Estilo para poner Nombre y Apellido en la misma línea */
         .fila-doble {
             display: flex;
             gap: 10px;
@@ -153,7 +155,7 @@
             </div>
             <div class="grupo-input">
                 <label>Teléfono de Contacto</label>
-                <input type="tel" id="tutorTelefono" placeholder="Ej: 1123456789" required>
+                <input type="text" id="tutorTelefono" placeholder="Ej: 1123456789" maxlength="10" inputmode="numeric" required>
             </div>
             <div class="grupo-input">
                 <label>Correo Electrónico</label>
@@ -207,7 +209,7 @@
     </div>
 
     <script>
-        // Configuración de Firebase (corregida)
+        // Configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyA3XqliF4oALMuuKFhtzEpE_7-eIm0jGQc",
             authDomain: "smarthockey-3aebd.firebaseapp.com",
@@ -222,34 +224,75 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Escuchamos cuando la gente aprieta el botón de registrarse
+        // Escuchamos el envío del formulario
         document.getElementById('formulario-registro').addEventListener('submit', function(e) {
-            e.preventDefault(); // Evita que la página se recargue sola
+            e.preventDefault();
 
             const boton = document.getElementById('btn-enviar');
             boton.innerText = "ENVIANDO...";
             boton.disabled = true;
 
-            // Juntamos todos los datos (ahora con nombres y apellidos separados)
+            // Levantamos los valores escritos
+            const tutorNombre = document.getElementById('tutorNombre').value.trim();
+            const tutorApellido = document.getElementById('tutorApellido').value.trim();
+            const tutorTelefono = document.getElementById('tutorTelefono').value.trim();
+            const tutorEmail = document.getElementById('tutorEmail').value.trim();
+            const jugadorNombre = document.getElementById('jugadorNombre').value.trim();
+            const jugadorApellido = document.getElementById('jugadorApellido').value.trim();
+            const jugadorClub = document.getElementById('jugadorClub').value.trim();
+            const jugadorPosicion = document.getElementById('jugadorPosicion').value;
+            const jugadorCategoria = document.getElementById('jugadorCategoria').value;
+
+            // ========================================================
+            //  CAPA DE SEGURIDAD: CONTROL DE CAMPOS OBLIGATORIOS
+            // ========================================================
+
+            // 1. Validar que no haya campos vacíos
+            if (!tutorNombre || !tutorApellido || !tutorTelefono || !tutorEmail || !jugadorNombre || !jugadorApellido || !jugadorClub || !jugadorPosicion || !jugadorCategoria) {
+                alert("Por favor, completá todos los campos. Todos son obligatorios.");
+                boton.innerText = "CONFIRMAR ASISTENCIA";
+                boton.disabled = false;
+                return;
+            }
+
+            // 2. Validar formato del mail
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(tutorEmail)) {
+                alert("Por favor, ingresá un correo electrónico válido (ejemplo@correo.com).");
+                boton.innerText = "CONFIRMAR ASISTENCIA";
+                boton.disabled = false;
+                return;
+            }
+
+            // 3. Validar que el celular tenga exactamente 10 números
+            const telefonoRegex = /^\d{10}$/;
+            if (!telefonoRegex.test(tutorTelefono)) {
+                alert("El teléfono debe contener exactamente 10 números (Ej: 1123456789), sin espacios, guiones ni el '0' o '15'.");
+                boton.innerText = "CONFIRMAR ASISTENCIA";
+                boton.disabled = false;
+                return;
+            }
+
+            // ========================================================
+            //  SI TODO ESTÁ BIEN, SE ENVÍA A FIREBASE
+            // ========================================================
             const datosInscripcion = {
-                tutorNombre: document.getElementById('tutorNombre').value,
-                tutorApellido: document.getElementById('tutorApellido').value,
-                tutorTelefono: document.getElementById('tutorTelefono').value,
-                tutorEmail: document.getElementById('tutorEmail').value,
-                jugadorNombre: document.getElementById('jugadorNombre').value,
-                jugadorApellido: document.getElementById('jugadorApellido').value,
-                jugadorClub: document.getElementById('jugadorClub').value,
-                jugadorPosicion: document.getElementById('jugadorPosicion').value,
-                jugadorCategoria: document.getElementById('jugadorCategoria').value,
-                pagado: false, // Arranca en falso hasta que vos verifiques la transferencia
-                ingreso: false, // Arranca en falso hasta que entre al evento y le escanees el QR
+                tutorNombre: tutorNombre,
+                tutorApellido: tutorApellido,
+                tutorTelefono: tutorTelefono,
+                tutorEmail: tutorEmail,
+                jugadorNombre: jugadorNombre,
+                jugadorApellido: jugadorApellido,
+                jugadorClub: jugadorClub,
+                jugadorPosicion: jugadorPosicion,
+                jugadorCategoria: jugadorCategoria,
+                pagado: false, 
+                ingreso: false, 
                 fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Guardamos los datos en la colección "clinica_hockey"
             db.collection("clinica_hockey").add(datosInscripcion)
             .then(function(docRef) {
-                // Si sale bien, escondemos el formulario y mostramos el cartel verde
                 document.getElementById('formulario-registro').style.display = 'none';
                 document.getElementById('alerta-exito').style.display = 'block';
             })
@@ -257,7 +300,7 @@
                 alert("Hubo un error al guardar los datos, intentá de nuevo.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
                 boton.disabled = false;
-                console.error("Error: ", error);
+                console.error("Error Firebase: ", error);
             });
         });
     </script>
