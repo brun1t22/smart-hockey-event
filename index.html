@@ -1,25 +1,245 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro Smart Hockey</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Hockey - Inscripción Clínica</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* Diseño oscuro y moderno como el de las fotos */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .contenedor {
+            background-color: #1a1a1a;
+            max-width: 450px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-seccion {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo-seccion h1 {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .logo-seccion h1 span {
+            color: #2f80ed; /* Azul Smart Hockey */
+        }
+
+        .logo-seccion p {
+            color: #828282;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        h3 {
+            color: #2f80ed;
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .grupo-input {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #bdbdbd;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background-color: #262626;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #2f80ed;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #2f80ed;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #1b66ca;
+        }
+
+        .mensaje-exito {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background-color: #1e3a1e;
+            border: 1px solid #2e7d32;
+            border-radius: 10px;
+            color: #4caf50;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Registro Smart Hockey</h1>
-  <form id="registroForm">
-    <input type="text" id="nombre" placeholder="Nombre" required>
-    <input type="text" id="apellido" placeholder="Apellido" required>
-    <input type="text" id="dni" placeholder="DNI (8 números)" required>
-    <input type="email" id="email" placeholder="Correo electrónico" required>
-    <select id="acceso" required>
-      <option value="">Seleccioná tu tipo de acceso</option>
-      <option value="jugador">Jugador</option>
-      <option value="entrenador">Entrenador</option>
-    </select>
-    <button type="submit">Confirmar asistencia</button>
-  </form>
 
-  <script src="app.js"></script>
+    <div class="contenedor">
+        <div class="logo-seccion">
+            <h1>SMART <span>HOCKEY</span></h1>
+            <p>Completá los datos para asegurar tu lugar en la clínica.</p>
+        </div>
+
+        <form id="formulario-registro">
+            
+            <h3>Información del Adulto Responsable</h3>
+            <div class="grupo-input">
+                <label>Nombre y Apellido (Padre/Madre/Tutor)</label>
+                <input type="text" id="tutorNombre" placeholder="Ej: Juan Pérez" required>
+            </div>
+            <div class="grupo-input">
+                <label>Teléfono de Contacto</label>
+                <input type="tel" id="tutorTelefono" placeholder="Ej: 1123456789" required>
+            </div>
+            <div class="grupo-input">
+                <label>Correo Electrónico</label>
+                <input type="email" id="tutorEmail" placeholder="ejemplo@correo.com" required>
+            </div>
+
+            <h3>Información del Jugador/a</h3>
+            <div class="grupo-input">
+                <label>Nombre y Apellido del Alumno/a</label>
+                <input type="text" id="jugadorNombre" placeholder="Ej: Sofía Pérez" required>
+            </div>
+            <div class="grupo-input">
+                <label>Club Actual o Escuela</label>
+                <input type="text" id="jugadorClub" placeholder="Ej: St Brendan's" required>
+            </div>
+            <div class="grupo-input">
+                <label>Posición en la cancha</label>
+                <select id="jugadorPosicion" required>
+                    <option value="" disabled selected>Seleccioná una posición</option>
+                    <option value="ARQUERA/O">ARQUERA/O</option>
+                    <option value="DEFENSOR/A">DEFENSOR/A</option>
+                    <option value="VOLANTE">VOLANTE</option>
+                    <option value="DELANTERO/A">DELANTERO/A</option>
+                </select>
+            </div>
+            <div class="grupo-input">
+                <label>Categoría</label>
+                <select id="jugadorCategoria" required>
+                    <option value="" disabled selected>Seleccioná una categoría</option>
+                    <option value="SUB 16">SUB 16, 6TA (2010 - 2011)</option>
+                    <option value="SUB 14">SUB 14, 7MA (2012 - 2013)</option>
+                    <option value="SUB 12">SUB 12, 8VA (2014 - 2015)</option>
+                </select>
+            </div>
+
+            <button type="submit" id="btn-enviar">CONFIRMAR ASISTENCIA</button>
+        </form>
+
+        <div class="mensaje-exito" id="alerta-exito">
+            <h2>¡Inscripción Enviada!</h2>
+            <p style="color: #fff; margin-top: 10px; font-size: 14px;">
+                Los datos fueron cargados. Realizá la transferencia y, una vez verificado el pago, se habilitará tu pase QR.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // REMPLAZÁ ESTO CON TUS DATOS DE FIREBASE
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_AUTH_DOMAIN",
+            projectId: "TU_PROJECT_ID",
+            storageBucket: "TU_STORAGE_BUCKET",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+        // ==========================================
+
+        // Inicializamos Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Escuchamos cuando la gente aprieta el botón de registrarse
+        document.getElementById('formulario-registro').addEventListener('submit', function(e) {
+            e.preventDefault(); // Evita que la página se recargue sola
+
+            const boton = document.getElementById('btn-enviar');
+            boton.innerText = "ENVIANDO...";
+            boton.disabled = true;
+
+            // Juntamos todos los datos que escribió el usuario
+            const datosInscripcion = {
+                tutorNombre: document.getElementById('tutorNombre').value,
+                tutorTelefono: document.getElementById('tutorTelefono').value,
+                tutorEmail: document.getElementById('tutorEmail').value,
+                jugadorNombre: document.getElementById('jugadorNombre').value,
+                jugadorClub: document.getElementById('jugadorClub').value,
+                jugadorPosicion: document.getElementById('jugadorPosicion').value,
+                jugadorCategoria: document.getElementById('jugadorCategoria').value,
+                pagado: false, // Arranca en falso hasta que vos verifiques la transferencia
+                ingreso: false, // Arranca en falso hasta que entre al evento y le escanees el QR
+                fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Guardamos los datos dentro de una nueva colección llamada "clinica_hockey"
+            db.collection("clinica_hockey").add(datosInscripcion)
+            .then(function(docRef) {
+                // Si sale bien, escondemos el formulario y mostramos el cartel verde
+                document.getElementById('formulario-registro').style.display = 'none';
+                document.getElementById('alerta-exito').style.display = 'block';
+            })
+            .catch(function(error) {
+                alert("Hubo un error al guardar los datos, intentá de nuevo.");
+                boton.innerText = "CONFIRMAR ASISTENCIA";
+                boton.disabled = false;
+                console.error("Error: ", error);
+            });
+        });
+    </script>
 </body>
 </html>
