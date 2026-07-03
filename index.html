@@ -9,7 +9,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* Diseño oscuro y moderno como el de las fotos */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -48,7 +47,7 @@
         }
 
         .logo-seccion h1 span {
-            color: #2f80ed; /* Azul Smart Hockey */
+            color: #2f80ed;
         }
 
         .logo-seccion p {
@@ -67,6 +66,15 @@
 
         .grupo-input {
             margin-bottom: 15px;
+        }
+
+        .fila-doble {
+            display: flex;
+            gap: 10px;
+        }
+
+        .fila-doble .grupo-input {
+            width: 50%;
         }
 
         label {
@@ -133,9 +141,15 @@
         <form id="formulario-registro">
             
             <h3>Información del Adulto Responsable</h3>
-            <div class="grupo-input">
-                <label>Nombre y Apellido (Padre/Madre/Tutor)</label>
-                <input type="text" id="tutorNombre" placeholder="Ej: Juan Pérez" required>
+            <div class="fila-doble">
+                <div class="grupo-input">
+                    <label>Nombre</label>
+                    <input type="text" id="tutorNombre" placeholder="Ej: Juan" required>
+                </div>
+                <div class="grupo-input">
+                    <label>Apellido</label>
+                    <input type="text" id="tutorApellido" placeholder="Ej: Pérez" required>
+                </div>
             </div>
             <div class="grupo-input">
                 <label>Teléfono de Contacto</label>
@@ -147,9 +161,15 @@
             </div>
 
             <h3>Información del Jugador/a</h3>
-            <div class="grupo-input">
-                <label>Nombre y Apellido del Alumno/a</label>
-                <input type="text" id="jugadorNombre" placeholder="Ej: Sofía Pérez" required>
+            <div class="fila-doble">
+                <div class="grupo-input">
+                    <label>Nombre</label>
+                    <input type="text" id="jugadorNombre" placeholder="Ej: Sofía" required>
+                </div>
+                <div class="grupo-input">
+                    <label>Apellido</label>
+                    <input type="text" id="jugadorApellido" placeholder="Ej: Pérez" required>
+                </div>
             </div>
             <div class="grupo-input">
                 <label>Club Actual o Escuela</label>
@@ -187,20 +207,16 @@
     </div>
 
     <script>
-        // ==========================================
-        // REMPLAZÁ ESTO CON TUS DATOS DE FIREBASE
-        // ==========================================
+        // Configuración de Firebase (corregida)
         const firebaseConfig = {
             apiKey: "AIzaSyA3XqliF4oALMuuKFhtzEpE_7-eIm0jGQc",
-          authDomain: "smarthockey-3aebd.firebaseapp.com",
-          projectId: "smarthockey-3aebd",
-          storageBucket: "smarthockey-3aebd.firebasestorage.app",
-          messagingSenderId: "560324583192",
-          appId: "1:560324583192:web:0dc9593181df61f822c86d",
-          measurementId: "G-VBMY3G0RMG"
+            authDomain: "smarthockey-3aebd.firebaseapp.com",
+            projectId: "smarthockey-3aebd",
+            storageBucket: "smarthockey-3aebd.firebasestorage.app",
+            messagingSenderId: "560324583192",
+            appId: "1:560324583192:web:0dc9593181df61f822c86d",
+            measurementId: "G-VBMY3G0RMG"
         };
-        };
-        // ==========================================
 
         // Inicializamos Firebase
         firebase.initializeApp(firebaseConfig);
@@ -214,12 +230,14 @@
             boton.innerText = "ENVIANDO...";
             boton.disabled = true;
 
-            // Juntamos todos los datos que escribió el usuario
+            // Juntamos todos los datos (ahora con nombres y apellidos separados)
             const datosInscripcion = {
                 tutorNombre: document.getElementById('tutorNombre').value,
+                tutorApellido: document.getElementById('tutorApellido').value,
                 tutorTelefono: document.getElementById('tutorTelefono').value,
                 tutorEmail: document.getElementById('tutorEmail').value,
                 jugadorNombre: document.getElementById('jugadorNombre').value,
+                jugadorApellido: document.getElementById('jugadorApellido').value,
                 jugadorClub: document.getElementById('jugadorClub').value,
                 jugadorPosicion: document.getElementById('jugadorPosicion').value,
                 jugadorCategoria: document.getElementById('jugadorCategoria').value,
@@ -228,7 +246,7 @@
                 fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Guardamos los datos dentro de una nueva colección llamada "clinica_hockey"
+            // Guardamos los datos en la colección "clinica_hockey"
             db.collection("clinica_hockey").add(datosInscripcion)
             .then(function(docRef) {
                 // Si sale bien, escondemos el formulario y mostramos el cartel verde
