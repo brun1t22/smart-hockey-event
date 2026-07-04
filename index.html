@@ -120,15 +120,46 @@
             background-color: #1b66ca;
         }
 
+        /* Cartel de éxito mejorado con los datos de pago */
         .mensaje-exito {
             display: none;
-            text-align: center;
-            padding: 20px;
-            background-color: #1e3a1e;
-            border: 1px solid #2e7d32;
+            background-color: #1a1a1a;
             border-radius: 10px;
+            color: #ffffff;
+        }
+
+        .mensaje-exito h2 {
             color: #4caf50;
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .bloque-pago {
+            background-color: #262626;
+            border-left: 4px solid #2f80ed;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .bloque-pago p {
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .bloque-pago strong {
+            color: #2f80ed;
+        }
+
+        .info-contacto {
+            font-size: 13px;
+            color: #bdbdbd;
+            line-height: 1.5;
             margin-top: 15px;
+            border-top: 1px solid #333;
+            padding-top: 15px;
         }
     </style>
 </head>
@@ -201,10 +232,24 @@
         </form>
 
         <div class="mensaje-exito" id="alerta-exito">
-            <h2>¡Inscripción Enviada!</h2>
-            <p style="color: #fff; margin-top: 10px; font-size: 14px;">
-                Los datos fueron cargados. Realizá la transferencia y, una vez verificado el pago, se habilitará tu pase QR.
-            </p>
+            <h2>¡Inscripción Recibida!</h2>
+            <p style="font-size: 15px; text-align: center; margin-bottom: 10px;">¡Gracias por sumarte!</p>
+            
+            <div class="bloque-pago">
+                <p style="font-weight: bold; color: #4caf50; font-size: 15px; text-align: center; margin-bottom: 12px;">RESERVA TU LUGAR</p>
+                <p>Hacé tu transferencia:</p>
+                <p><strong>CVU:</strong> 0000003100027493667318</p>
+                <p><strong>Alias:</strong> smarthockey</p>
+                <p style="margin-top: 12px; font-size: 13px; color: #e0e0e0; border-top: 1px dashed #444; padding-top: 8px;">
+                    Enviamos tu comprobante de pago por cualquier medio de comunicación. Te enviamos estos mismos datos a tu correo electrónico.
+                </p>
+            </div>
+
+            <div class="info-contacto">
+                <p><strong>¿Necesitás ayuda o más información?</strong></p>
+                <p style="margin-top: 5px;">• WhatsApp: 1128889680</p>
+                <p>• Correo: infosmart.hockey@gmail.com</p>
+            </div>
         </div>
     </div>
 
@@ -224,7 +269,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Escuchamos el envío del formulario
         document.getElementById('formulario-registro').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -243,11 +287,7 @@
             const jugadorPosicion = document.getElementById('jugadorPosicion').value;
             const jugadorCategoria = document.getElementById('jugadorCategoria').value;
 
-            // ========================================================
-            //  CAPA DE SEGURIDAD: CONTROL DE CAMPOS OBLIGATORIOS
-            // ========================================================
-
-            // 1. Validar que no haya campos vacíos
+            // Validaciones básicas de seguridad
             if (!tutorNombre || !tutorApellido || !tutorTelefono || !tutorEmail || !jugadorNombre || !jugadorApellido || !jugadorClub || !jugadorPosicion || !jugadorCategoria) {
                 alert("Por favor, completá todos los campos. Todos son obligatorios.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
@@ -255,27 +295,23 @@
                 return;
             }
 
-            // 2. Validar formato del mail
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(tutorEmail)) {
-                alert("Por favor, ingresá un correo electrónico válido (ejemplo@correo.com).");
+                alert("Por favor, ingresá un correo electrónico válido.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
                 boton.disabled = false;
                 return;
             }
 
-            // 3. Validar que el celular tenga exactamente 10 números
             const telefonoRegex = /^\d{10}$/;
             if (!telefonoRegex.test(tutorTelefono)) {
-                alert("El teléfono debe contener exactamente 10 números (Ej: 1123456789), sin espacios, guiones ni el '0' o '15'.");
+                alert("El teléfono debe contener exactamente 10 números enteros.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
                 boton.disabled = false;
                 return;
             }
 
-            // ========================================================
-            //  SI TODO ESTÁ BIEN, SE ENVÍA A FIREBASE
-            // ========================================================
+            // Datos del inscripto
             const datosInscripcion = {
                 tutorNombre: tutorNombre,
                 tutorApellido: tutorApellido,
@@ -291,8 +327,41 @@
                 fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
             };
 
+            // Guardamos el registro de la clínica
             db.collection("clinica_hockey").add(datosInscripcion)
             .then(function(docRef) {
+                
+                // NUEVO: Creamos una orden de mail automático en Firebase
+                return db.collection("mail").add({
+                    to: tutorEmail,
+                    message: {
+                        subject: "Smart Hockey - Información de Pago para la Clínica",
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 8px; color: #333;">
+                                <h2 style="color: #2f80ed; margin-bottom: 5px;">¡Inscripción Recibida!</h2>
+                                <p>Hola <strong>${tutorNombre}</strong>, recibimos correctamente los datos de inscripción para <strong>${jugadorNombre} ${jugadorApellido}</strong>.</p>
+                                
+                                <div style="background-color: #fff; border-left: 4px solid #2f80ed; padding: 15px; margin: 20px 0; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #2f80ed; text-align: center;">RESERVA TU LUGAR</p>
+                                    <p style="margin: 0 0 10px 0;">Hacé tu transferencia bancaria:</p>
+                                    <p style="margin: 5px 0;"><strong>CVU:</strong> 0000003100027493667318</p>
+                                    <p style="margin: 5px 0;"><strong>Alias:</strong> smarthockey</p>
+                                </div>
+                                
+                                <p style="font-size: 14px; line-height: 1.4;">Por favor, envianos el comprobante de pago por cualquier medio de comunicación para confirmar de manera definitiva la vacante.</p>
+                                
+                                <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 13px; color: #666;">
+                                    <p><strong>Para más información o consultas:</strong></p>
+                                    <p style="margin: 5px 0;">• WhatsApp: 1128889680</p>
+                                    <p style="margin: 5px 0;">• Correo: infosmart.hockey@gmail.com</p>
+                                </div>
+                            </div>
+                        `
+                    }
+                });
+            })
+            .then(function() {
+                // Esconde el formulario y muestra el cartel renovado
                 document.getElementById('formulario-registro').style.display = 'none';
                 document.getElementById('alerta-exito').style.display = 'block';
             })
@@ -300,7 +369,7 @@
                 alert("Hubo un error al guardar los datos, intentá de nuevo.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
                 boton.disabled = false;
-                console.error("Error Firebase: ", error);
+                console.error("Error completo: ", error);
             });
         });
     </script>
