@@ -9,47 +9,54 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
-    <!-- Librería Mágica para leer QRs con la cámara -->
+    <!-- Librería Mágica para leer QRs -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
         body { 
             font-family: Arial, sans-serif; 
             text-align: center; 
-            background-color: #1a1a1a; /* Fondo oscuro para que no encandile en la puerta */
+            background-color: #1a1a1a; 
             color: white; 
             margin: 0; 
             padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
-        h1 { color: #2f80ed; font-size: 24px; }
+        h1 { color: #2f80ed; font-size: 24px; margin-bottom: 5px; }
+        p.subtitulo { color: #888; margin-bottom: 20px; }
         
         /* Contenedor de la cámara */
         #reader { 
             width: 100%; 
             max-width: 400px; 
-            margin: 0 auto; 
-            background: white; 
-            color: black; 
+            background: black; 
             border-radius: 10px; 
             overflow: hidden; 
             border: 3px solid #333;
+            display: none; /* Oculto al inicio */
         }
         
         /* Carteles de resultado */
         #resultado { 
-            margin-top: 20px; 
-            padding: 20px; 
+            width: 100%;
+            max-width: 400px;
+            margin-top: 10px; 
+            padding: 30px 20px; 
             border-radius: 10px; 
             font-size: 18px; 
             display: none; 
+            box-sizing: border-box;
         }
         .exito { background-color: #4caf50; color: white; border: 2px solid #2e7d32; }
         .error { background-color: #f44336; color: white; border: 2px solid #c62828; }
         .usado { background-color: #ff9800; color: white; border: 2px solid #ef6c00; }
         
         button { 
-            margin-top: 20px; 
-            padding: 15px 30px; 
+            margin-top: 25px; 
+            padding: 18px 40px; 
             font-size: 18px; 
             cursor: pointer; 
             border-radius: 8px; 
@@ -58,15 +65,24 @@
             color: white;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
         }
+        button:hover { background-color: #1b66ca; }
         button:active { transform: translateY(2px); }
+
+        #btn-iniciar { background-color: #4caf50; }
+        #btn-iniciar:hover { background-color: #388e3c; }
     </style>
 </head>
 <body>
 
-    <h1>📸 Control de Puerta</h1>
-    <p>Apuntá la cámara al QR del jugador</p>
+    <h1>📸 Puerta de Acceso</h1>
+    <p class="subtitulo" id="texto-instruccion">Alineá el QR dentro del recuadro</p>
     
+    <!-- Botón inicial por si el navegador bloquea la cámara automática -->
+    <button id="btn-iniciar" onclick="iniciarCamara()">INICIAR ESCÁNER</button>
+
     <!-- Acá va a aparecer la cámara -->
     <div id="reader"></div>
     
@@ -74,7 +90,7 @@
     <div id="resultado"></div>
     
     <!-- Botón para escanear al siguiente en la fila -->
-    <button id="btn-siguiente" style="display: none;" onclick="reanudarEscaneo()">Escanear al Siguiente</button>
+    <button id="btn-siguiente" style="display: none;" onclick="iniciarCamara()">Escanear al Siguiente</button>
 
     <script>
         // 1. CONFIGURACIÓN FIREBASE
@@ -90,73 +106,85 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let html5QrcodeScanner;
-        let escaneando = true;
+        let html5QrCode;
 
-        // 2. QUÉ PASA CUANDO LEE UN CÓDIGO
-        function onScanSuccess(codigoLeido, decodedResult) {
-            if (!escaneando) return; // Si ya está procesando uno, ignora
-            escaneando = false; 
-            
-            // Pausamos la cámara
-            html5QrcodeScanner.pause();
+        // 2. FUNCIÓN PARA PRENDER LA CÁMARA TRASERA
+        function iniciarCamara() {
+            // Ocultamos botones y resultados, mostramos el recuadro negro
+            document.getElementById("btn-iniciar").style.display = "none";
+            document.getElementById("resultado").style.display = "none";
+            document.getElementById("btn-siguiente").style.display = "none";
+            document.getElementById("reader").style.display = "block";
+            document.getElementById("texto-instruccion").innerText = "Alineá el QR dentro del recuadro";
 
-            const resultadoDiv = document.getElementById("resultado");
-            const btnSiguiente = document.getElementById("btn-siguiente");
-            resultadoDiv.style.display = "block";
-            resultadoDiv.className = ""; 
-            resultadoDiv.innerHTML = "⏳ Verificando ticket...";
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
 
-            // Buscamos el ID en la base de datos
-            const docRef = db.collection("clinica_hockey").doc(codigoLeido);
-
-            docRef.get().then((doc) => {
-                if (doc.exists) {
-                    const datos = doc.data();
-
-                    if (datos.ingresado) {
-                        // YA LO USARON
-                        resultadoDiv.className = "usado";
-                        resultadoDiv.innerHTML = `⚠️ <b>¡ALERTA! ESTE QR YA FUE USADO</b><br><br>Jugador/a: ${datos.jugadorNombre} ${datos.jugadorApellido}<br>Ya se registró su entrada previamente.`;
-                    } else if (!datos.pagado) {
-                        // NO PAGÓ
-                        resultadoDiv.className = "error";
-                        resultadoDiv.innerHTML = `❌ <b>ACCESO DENEGADO</b><br><br>El pago de ${datos.jugadorNombre} no figura aprobado en el sistema.`;
-                    } else {
-                        // TODO OK - ENTRA! Le marcamos "ingresado: true" en la base
-                        docRef.update({ ingresado: true }).then(() => {
-                            resultadoDiv.className = "exito";
-                            resultadoDiv.innerHTML = `✅ <b>¡ACCESO PERMITIDO!</b><br><br>Bienvenido/a:<br><b>${datos.jugadorNombre} ${datos.jugadorApellido}</b><br>Categoría: ${datos.jugadorCategoria}`;
-                        });
-                    }
-                } else {
-                    // QR TRUCHO / NO EXISTE
-                    resultadoDiv.className = "error";
-                    resultadoDiv.innerHTML = "❌ <b>QR INVÁLIDO</b><br>No existe en nuestra base de datos.";
-                }
-                btnSiguiente.style.display = "inline-block";
-            }).catch((error) => {
-                resultadoDiv.className = "error";
-                resultadoDiv.innerHTML = "Error de conexión. Revisá tu internet.";
-                btnSiguiente.style.display = "inline-block";
+            // Iniciamos forzando la cámara trasera ("environment")
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 15, qrbox: { width: 250, height: 250 } },
+                onScanSuccess
+            ).catch((err) => {
+                console.error("Error al iniciar cámara", err);
+                alert("Por favor, dale permisos de cámara al navegador.");
             });
         }
 
-        // 3. FUNCIÓN PARA EL BOTÓN "ESCANEAR AL SIGUIENTE"
-        function reanudarEscaneo() {
-            escaneando = true;
-            document.getElementById("resultado").style.display = "none";
-            document.getElementById("btn-siguiente").style.display = "none";
-            html5QrcodeScanner.resume(); // Vuelve a prender la cámara
-        }
+        // 3. QUÉ PASA CUANDO LEE UN CÓDIGO
+        function onScanSuccess(codigoLeido, decodedResult) {
+            // FRENAMOS Y APAGAMOS LA CÁMARA
+            html5QrCode.stop().then(() => {
+                
+                // Ocultamos el recuadro de la cámara
+                document.getElementById("reader").style.display = "none";
+                document.getElementById("texto-instruccion").innerText = "Resultado del escaneo";
 
-        // 4. INICIAR LA CÁMARA
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: {width: 250, height: 250} },
-            false
-        );
-        html5QrcodeScanner.render(onScanSuccess);
+                const resultadoDiv = document.getElementById("resultado");
+                const btnSiguiente = document.getElementById("btn-siguiente");
+                
+                resultadoDiv.style.display = "block";
+                resultadoDiv.className = ""; 
+                resultadoDiv.innerHTML = "⏳ Verificando en la base de datos...";
+
+                // Buscamos el ID en Firebase
+                const docRef = db.collection("clinica_hockey").doc(codigoLeido);
+
+                docRef.get().then((doc) => {
+                    if (doc.exists) {
+                        const datos = doc.data();
+
+                        if (datos.ingresado) {
+                            resultadoDiv.className = "usado";
+                            resultadoDiv.innerHTML = `⚠️ <b>¡ALERTA! QR YA USADO</b><br><br>Jugador/a: <br><b>${datos.jugadorNombre} ${datos.jugadorApellido}</b><br><br>Ya se registró su entrada previamente.`;
+                        } else if (!datos.pagado) {
+                            resultadoDiv.className = "error";
+                            resultadoDiv.innerHTML = `❌ <b>ACCESO DENEGADO</b><br><br>El pago de ${datos.jugadorNombre} no figura aprobado en el sistema.`;
+                        } else {
+                            docRef.update({ ingresado: true }).then(() => {
+                                resultadoDiv.className = "exito";
+                                resultadoDiv.innerHTML = `✅ <b>¡ACCESO PERMITIDO!</b><br><br>Bienvenido/a:<br><b>${datos.jugadorNombre} ${datos.jugadorApellido}</b><br>Categoría: ${datos.jugadorCategoria}`;
+                            });
+                        }
+                    } else {
+                        resultadoDiv.className = "error";
+                        resultadoDiv.innerHTML = "❌ <b>QR INVÁLIDO</b><br><br>Este código no existe en nuestra base de datos.";
+                    }
+                    
+                    // Mostramos el botón para el siguiente
+                    btnSiguiente.style.display = "block";
+                    
+                }).catch((error) => {
+                    resultadoDiv.className = "error";
+                    resultadoDiv.innerHTML = "❌ <b>Error de conexión</b><br>Revisá el internet de tu celular.";
+                    btnSiguiente.style.display = "block";
+                });
+
+            }).catch((err) => {
+                console.error("Error al frenar la cámara.", err);
+            });
+        }
     </script>
 </body>
 </html>
