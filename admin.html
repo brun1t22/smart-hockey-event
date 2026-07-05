@@ -31,12 +31,12 @@
 
     <script>
         // ==========================================
-        // 1. INICIALIZAR EMAILJS (Poné tu Public Key)
+        // 1. INICIALIZAR EMAILJS
         // ==========================================
         emailjs.init("fBOyiVpg9KsCk_TMe");
 
         // ==========================================
-        // 2. CONFIGURACIÓN DE FIREBASE (La misma que tenés)
+        // 2. CONFIGURACIÓN DE FIREBASE
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyA3XqliF4oALMuuKFhtzEpE_7-eIm0jGQc",
@@ -50,7 +50,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Cargar inscriptos desde Firebase
         // Cargar inscriptos desde Firebase
         function cargarInscriptos() {
             db.collection("clinica_hockey").orderBy("fechaRegistro", "desc").onSnapshot((querySnapshot) => {
@@ -73,20 +72,20 @@
                         botonHtml = `<span class="badge-pagado">✓ Pago Aprobado / QR Enviado</span>`;
                     }
 
-                    // --- NUEVA LÓGICA DE TRANSFERENCIA ---
+                    // --- LÓGICA DE TRANSFERENCIA CORREGIDA ---
                     let infoPagoHTML = "";
                     
-                    // Si en la base de datos existe 'titularNombre' (es decir, destildaron el checkbox y escribieron a alguien más)
-                    if (datos.titularNombre && datos.titularNombre.trim() !== "") {
-                        let apellidoTit = datos.titularApellido ? datos.titularApellido : "";
-                        // Mostramos "Datos de transferencia" pero mantenemos el teléfono del tutor a mano
-                        infoPagoHTML = `<p><strong>Datos de transferencia:</strong> ${datos.titularNombre} ${apellidoTit} (Contacto: 📱 ${datos.tutorTelefono})</p>`;
+                    // Verificamos si existe el campo "titularPagoNombre" (que agregamos en index.html)
+                    // Y verificamos que sea DISTINTO al nombre del tutor.
+                    if (datos.titularPagoNombre && datos.titularPagoNombre !== datos.tutorNombre) {
+                        let apellidoTit = datos.titularPagoApellido ? datos.titularPagoApellido : "";
+                        infoPagoHTML = `<p><strong>Datos de transferencia:</strong> ${datos.titularPagoNombre} ${apellidoTit} (Contacto: 📱 ${datos.tutorTelefono})</p>`;
                     } else {
-                        // Si no existe, asumimos que pagó el tutor (checkbox tildado)
+                        // Si es igual al tutor, o si es una inscripción vieja (de tus primeras pruebas)
                         let apellidoTut = datos.tutorApellido ? datos.tutorApellido : "";
                         infoPagoHTML = `<p><strong>Tutor:</strong> ${datos.tutorNombre} ${apellidoTut} - 📱 ${datos.tutorTelefono}</p>`;
                     }
-                    // -------------------------------------
+                    // -----------------------------------------
 
                     contenedor.innerHTML += `
                         <div class="jugador-card">
@@ -120,10 +119,9 @@
                 const templateParams = {
                     tutorEmail: email,
                     jugadorNombre: nombre,
-                    idJugador: docId // Esto arma el QR en la plantilla
+                    idJugador: docId 
                 };
 
-                // PONÉ TU SERVICE ID Y EL TEMPLATE ID DEL "TICKET QR"
                 return emailjs.send('service_5l9bx6j', 'template_sdiflnk', templateParams);
             })
             .then((response) => {
