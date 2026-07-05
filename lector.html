@@ -107,10 +107,9 @@
         const db = firebase.firestore();
 
         let html5QrCode;
+        let estaEscaneando = false;
 
-        // 2. FUNCIÓN PARA PRENDER LA CÁMARA TRASERA
         function iniciarCamara() {
-            // Ocultamos botones y resultados, mostramos el recuadro negro
             document.getElementById("btn-iniciar").style.display = "none";
             document.getElementById("resultado").style.display = "none";
             document.getElementById("btn-siguiente").style.display = "none";
@@ -121,23 +120,25 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            // Iniciamos forzando la cámara trasera ("environment")
+            estaEscaneando = true;
+
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 15, qrbox: { width: 250, height: 250 } },
                 onScanSuccess
             ).catch((err) => {
-                console.error("Error al iniciar cámara", err);
-                alert("Por favor, dale permisos de cámara al navegador.");
+                console.error("Error de cámara:", err);
+                alert("⚠️ Error: No se encontró la cámara trasera. Asegurate de probar esto en un celular y darle permisos de cámara al navegador.");
+                document.getElementById("btn-iniciar").style.display = "block";
+                document.getElementById("reader").style.display = "none";
             });
         }
 
-        // 3. QUÉ PASA CUANDO LEE UN CÓDIGO
         function onScanSuccess(codigoLeido, decodedResult) {
-            // FRENAMOS Y APAGAMOS LA CÁMARA
+            if (!estaEscaneando) return;
+            estaEscaneando = false; 
+
             html5QrCode.stop().then(() => {
-                
-                // Ocultamos el recuadro de la cámara
                 document.getElementById("reader").style.display = "none";
                 document.getElementById("texto-instruccion").innerText = "Resultado del escaneo";
 
@@ -148,7 +149,6 @@
                 resultadoDiv.className = ""; 
                 resultadoDiv.innerHTML = "⏳ Verificando en la base de datos...";
 
-                // Buscamos el ID en Firebase
                 const docRef = db.collection("clinica_hockey").doc(codigoLeido);
 
                 docRef.get().then((doc) => {
@@ -172,7 +172,6 @@
                         resultadoDiv.innerHTML = "❌ <b>QR INVÁLIDO</b><br><br>Este código no existe en nuestra base de datos.";
                     }
                     
-                    // Mostramos el botón para el siguiente
                     btnSiguiente.style.display = "block";
                     
                 }).catch((error) => {
