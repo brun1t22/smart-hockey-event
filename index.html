@@ -235,9 +235,9 @@
                     El titular de la cuenta bancaria es el Adulto Responsable
                 </label>
 
-                <div id="datos-transferencia" style="display: none; gap: 10px;">
-                    <input type="text" id="titular-nombre" placeholder="Nombre de quien transfiere" style="width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #444; background-color: #222; color: white; font-size: 14px;">
-                    <input type="text" id="titular-apellido" placeholder="Apellido de quien transfiere" style="width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #444; background-color: #222; color: white; font-size: 14px;">
+                <div id="datos-transferencia" style="display: none; flex-direction: column; gap: 15px;">
+                    <input type="text" id="titular-nombre" placeholder="Nombre de quien transfiere" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background-color: #262626; color: white; font-size: 14px;">
+                    <input type="text" id="titular-apellido" placeholder="Apellido de quien transfiere" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background-color: #262626; color: white; font-size: 14px;">
                 </div>
             </div>
 
@@ -249,6 +249,7 @@
                     if (checkbox.checked) {
                         divDatos.style.display = "none";
                     } else {
+                        // Al mostrarlo, ahora se pondrán uno debajo del otro
                         divDatos.style.display = "flex"; 
                     }
                 }
