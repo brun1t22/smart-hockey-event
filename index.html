@@ -7,7 +7,9 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
     <style>
         /* Diseño oscuro y moderno */
         * {
@@ -48,7 +50,7 @@
         }
 
         .logo-seccion h1 span {
-            color: #2f80ed; /* Azul Smart Hockey */
+            color: #2f80ed;
         }
 
         .logo-seccion p {
@@ -69,7 +71,6 @@
             margin-bottom: 15px;
         }
 
-        /* Estilo para poner Nombre y Apellido en la misma línea */
         .fila-doble {
             display: flex;
             gap: 10px;
@@ -120,7 +121,7 @@
             background-color: #1b66ca;
         }
 
-        /* Cartel de éxito mejorado con los datos de pago */
+        /* Cartel de éxito dinámico con la información de transferencia */
         .mensaje-exito {
             display: none;
             background-color: #1a1a1a;
@@ -241,7 +242,7 @@
                 <p><strong>CVU:</strong> 0000003100027493667318</p>
                 <p><strong>Alias:</strong> smarthockey</p>
                 <p style="margin-top: 12px; font-size: 13px; color: #e0e0e0; border-top: 1px dashed #444; padding-top: 8px;">
-                    Enviamos tu comprobante de pago por cualquier medio de comunicación. Te enviamos estos mismos datos a tu correo electrónico.
+                    Envíanos tu comprobante de pago respondiendo el correo electrónico que te acabamos de enviar, o escribinos al WhatsApp.
                 </p>
             </div>
 
@@ -254,7 +255,16 @@
     </div>
 
     <script>
-        // Configuración de Firebase
+        // ==========================================
+        // 1. INICIALIZAR EMAILJS (Poné tu Public Key acá)
+        // ==========================================
+        (function(){
+            emailjs.init("ACA_PONE_TU_PUBLIC_KEY"); 
+        })();
+
+        // ==========================================
+        // 2. CONFIGURACIÓN DE FIREBASE
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyA3XqliF4oALMuuKFhtzEpE_7-eIm0jGQc",
             authDomain: "smarthockey-3aebd.firebaseapp.com",
@@ -264,8 +274,6 @@
             appId: "1:560324583192:web:0dc9593181df61f822c86d",
             measurementId: "G-VBMY3G0RMG"
         };
-
-        // Inicializamos Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -276,7 +284,6 @@
             boton.innerText = "ENVIANDO...";
             boton.disabled = true;
 
-            // Levantamos los valores escritos
             const tutorNombre = document.getElementById('tutorNombre').value.trim();
             const tutorApellido = document.getElementById('tutorApellido').value.trim();
             const tutorTelefono = document.getElementById('tutorTelefono').value.trim();
@@ -287,31 +294,13 @@
             const jugadorPosicion = document.getElementById('jugadorPosicion').value;
             const jugadorCategoria = document.getElementById('jugadorCategoria').value;
 
-            // Validaciones básicas de seguridad
             if (!tutorNombre || !tutorApellido || !tutorTelefono || !tutorEmail || !jugadorNombre || !jugadorApellido || !jugadorClub || !jugadorPosicion || !jugadorCategoria) {
-                alert("Por favor, completá todos los campos. Todos son obligatorios.");
+                alert("Por favor, completá todos los campos.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
                 boton.disabled = false;
                 return;
             }
 
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(tutorEmail)) {
-                alert("Por favor, ingresá un correo electrónico válido.");
-                boton.innerText = "CONFIRMAR ASISTENCIA";
-                boton.disabled = false;
-                return;
-            }
-
-            const telefonoRegex = /^\d{10}$/;
-            if (!telefonoRegex.test(tutorTelefono)) {
-                alert("El teléfono debe contener exactamente 10 números enteros.");
-                boton.innerText = "CONFIRMAR ASISTENCIA";
-                boton.disabled = false;
-                return;
-            }
-
-            // Datos del inscripto
             const datosInscripcion = {
                 tutorNombre: tutorNombre,
                 tutorApellido: tutorApellido,
@@ -327,49 +316,31 @@
                 fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Guardamos el registro de la clínica
+            // Guarda en Firebase
             db.collection("clinica_hockey").add(datosInscripcion)
             .then(function(docRef) {
                 
-                // NUEVO: Creamos una orden de mail automático en Firebase
-                return db.collection("mail").add({
-                    to: tutorEmail,
-                    message: {
-                        subject: "Smart Hockey - Información de Pago para la Clínica",
-                        html: `
-                            <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 8px; color: #333;">
-                                <h2 style="color: #2f80ed; margin-bottom: 5px;">¡Inscripción Recibida!</h2>
-                                <p>Hola <strong>${tutorNombre}</strong>, recibimos correctamente los datos de inscripción para <strong>${jugadorNombre} ${jugadorApellido}</strong>.</p>
-                                
-                                <div style="background-color: #fff; border-left: 4px solid #2f80ed; padding: 15px; margin: 20px 0; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #2f80ed; text-align: center;">RESERVA TU LUGAR</p>
-                                    <p style="margin: 0 0 10px 0;">Hacé tu transferencia bancaria:</p>
-                                    <p style="margin: 5px 0;"><strong>CVU:</strong> 0000003100027493667318</p>
-                                    <p style="margin: 5px 0;"><strong>Alias:</strong> smarthockey</p>
-                                </div>
-                                
-                                <p style="font-size: 14px; line-height: 1.4;">Por favor, envianos el comprobante de pago por cualquier medio de comunicación para confirmar de manera definitiva la vacante.</p>
-                                
-                                <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 13px; color: #666;">
-                                    <p><strong>Para más información o consultas:</strong></p>
-                                    <p style="margin: 5px 0;">• WhatsApp: 1128889680</p>
-                                    <p style="margin: 5px 0;">• Correo: infosmart.hockey@gmail.com</p>
-                                </div>
-                            </div>
-                        `
-                    }
-                });
+                // Manda el mail con EmailJS usando las variables
+                const templateParams = {
+                    tutorEmail: tutorEmail,
+                    tutorNombre: tutorNombre,
+                    jugadorNombre: jugadorNombre,
+                    jugadorApellido: jugadorApellido
+                };
+
+                // Poné tu Service ID y tu Template ID acá
+                return emailjs.send('service_5l9bx6j', 'template_7gz836l', templateParams);
             })
-            .then(function() {
-                // Esconde el formulario y muestra el cartel renovado
+            .then(function(response) {
+                console.log('Mail enviado', response.status, response.text);
                 document.getElementById('formulario-registro').style.display = 'none';
                 document.getElementById('alerta-exito').style.display = 'block';
             })
             .catch(function(error) {
-                alert("Hubo un error al guardar los datos, intentá de nuevo.");
+                alert("Hubo un error al procesar la inscripción.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
                 boton.disabled = false;
-                console.error("Error completo: ", error);
+                console.error("Error: ", error);
             });
         });
     </script>
