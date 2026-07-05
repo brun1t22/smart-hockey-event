@@ -51,6 +51,7 @@
         const db = firebase.firestore();
 
         // Cargar inscriptos desde Firebase
+        // Cargar inscriptos desde Firebase
         function cargarInscriptos() {
             db.collection("clinica_hockey").orderBy("fechaRegistro", "desc").onSnapshot((querySnapshot) => {
                 const contenedor = document.getElementById("lista-inscriptos");
@@ -72,11 +73,26 @@
                         botonHtml = `<span class="badge-pagado">✓ Pago Aprobado / QR Enviado</span>`;
                     }
 
+                    // --- NUEVA LÓGICA DE TRANSFERENCIA ---
+                    let infoPagoHTML = "";
+                    
+                    // Si en la base de datos existe 'titularNombre' (es decir, destildaron el checkbox y escribieron a alguien más)
+                    if (datos.titularNombre && datos.titularNombre.trim() !== "") {
+                        let apellidoTit = datos.titularApellido ? datos.titularApellido : "";
+                        // Mostramos "Datos de transferencia" pero mantenemos el teléfono del tutor a mano
+                        infoPagoHTML = `<p><strong>Datos de transferencia:</strong> ${datos.titularNombre} ${apellidoTit} (Contacto: 📱 ${datos.tutorTelefono})</p>`;
+                    } else {
+                        // Si no existe, asumimos que pagó el tutor (checkbox tildado)
+                        let apellidoTut = datos.tutorApellido ? datos.tutorApellido : "";
+                        infoPagoHTML = `<p><strong>Tutor:</strong> ${datos.tutorNombre} ${apellidoTut} - 📱 ${datos.tutorTelefono}</p>`;
+                    }
+                    // -------------------------------------
+
                     contenedor.innerHTML += `
                         <div class="jugador-card">
                             <div class="info">
                                 <p><strong>Jugador:</strong> ${datos.jugadorNombre} ${datos.jugadorApellido} (${datos.jugadorCategoria})</p>
-                                <p><strong>Tutor:</strong> ${datos.tutorNombre} - 📱 ${datos.tutorTelefono}</p>
+                                ${infoPagoHTML}
                             </div>
                             <div class="accion">
                                 ${botonHtml}
