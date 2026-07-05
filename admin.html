@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
@@ -22,7 +23,13 @@
     </style>
 </head>
 <body>
-
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center;">
+    <button onclick="exportarExcel()" style="padding: 10px 20px; background-color: #2f80ed; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        📥 Exportar a Excel
+    </button>
+    </div>
+    <div id="stats" style="text-align: center; margin-bottom: 20px; font-weight: bold;"></div>
+    
     <div class="contenedor">
         <h1>Panel de Administración</h1>
         <p>Listado de inscriptos. Verificá el comprobante y aprobá el pago para enviar el QR.</p>
@@ -137,6 +144,34 @@
 
         // Ejecutar carga inicial
         cargarInscriptos();
+
+        function exportarExcel() {
+    db.collection("clinica_hockey").get().then((snapshot) => {
+        let datosExport = snapshot.docs.map(doc => {
+            const d = doc.data();
+            return {
+                "Nombre": d.jugadorNombre,
+                "Apellido": d.jugadorApellido,
+                "Categoría": d.jugadorCategoria,
+                "Tutor": d.tutorNombre,
+                "Teléfono": d.tutorTelefono,
+                "Estado": d.pagado ? "Aprobado" : "Pendiente"
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(datosExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Inscriptos");
+        XLSX.writeFile(wb, "Inscriptos_SmartHockey.xlsx");
+    });
+}
+
+// Para las estadísticas: Llamá a esta función dentro del onSnapshot de cargarInscriptos
+function actualizarStats(snapshot) {
+    const total = snapshot.size;
+    const aprobados = snapshot.docs.filter(d => d.data().pagado).length;
+    document.getElementById("stats").innerHTML = `Total: ${total} | Aprobados: ${aprobados} | Pendientes: ${total - aprobados}`;
+}
     </script>
 </body>
 </html>
