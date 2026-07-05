@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Hockey - Panel de Control</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .contenedor { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #2f80ed; text-align: center; }
+        .jugador-card { background: #fff; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .info p { margin: 5px 0; font-size: 14px; }
+        .btn-aprobar { background-color: #4caf50; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-aprobar:hover { background-color: #388e3c; }
+        .btn-aprobar:disabled { background-color: #ccc; cursor: not-allowed; }
+        .badge-pagado { background-color: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1>Panel de Administración</h1>
+        <p>Listado de inscriptos. Verificá el comprobante y aprobá el pago para enviar el QR.</p>
+        <div id="lista-inscriptos">Cargando inscriptos...</div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. INICIALIZAR EMAILJS (Poné tu Public Key)
+        // ==========================================
+        emailjs.init("fBOyiVpg9KsCk_TMe");
+
+        // ==========================================
+        // 2. CONFIGURACIÓN DE FIREBASE (La misma que tenés)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3XqliF4oALMuuKFhtzEpE_7-eIm0jGQc",
+            authDomain: "smarthockey-3aebd.firebaseapp.com",
+            projectId: "smarthockey-3aebd",
+            storageBucket: "smarthockey-3aebd.firebasestorage.app",
+            messagingSenderId: "560324583192",
+            appId: "1:560324583192:web:0dc9593181df61f822c86d",
+            measurementId: "G-VBMY3G0RMG"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Cargar inscriptos desde Firebase
+        function cargarInscriptos() {
+            db.collection("clinica_hockey").orderBy("fechaRegistro", "desc").onSnapshot((querySnapshot) => {
+                const contenedor = document.getElementById("lista-inscriptos");
+                contenedor.innerHTML = ""; 
+
+                if (querySnapshot.empty) {
+                    contenedor.innerHTML = "<p>No hay inscriptos todavía.</p>";
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const datos = doc.data();
+                    const docId = doc.id; // El ID único del documento (Esto será nuestro QR)
+
+                    let botonHtml = '';
+                    if (!datos.pagado) {
+                        botonHtml = `<button class="btn-aprobar" id="btn-${docId}" onclick="aprobarPago('${docId}', '${datos.tutorEmail}', '${datos.jugadorNombre}')">Aprobar Pago y Enviar QR</button>`;
+                    } else {
+                        botonHtml = `<span class="badge-pagado">✓ Pago Aprobado / QR Enviado</span>`;
+                    }
+
+                    contenedor.innerHTML += `
+                        <div class="jugador-card">
+                            <div class="info">
+                                <p><strong>Jugador:</strong> ${datos.jugadorNombre} ${datos.jugadorApellido} (${datos.jugadorCategoria})</p>
+                                <p><strong>Tutor:</strong> ${datos.tutorNombre} - 📱 ${datos.tutorTelefono}</p>
+                            </div>
+                            <div class="accion">
+                                ${botonHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // Función para aprobar el pago y enviar el mail
+        function aprobarPago(docId, email, nombre) {
+            if(!confirm("¿Confirmás que recibiste el pago de " + nombre + "? Se le enviará el QR ahora mismo.")) return;
+
+            const boton = document.getElementById(`btn-${docId}`);
+            boton.innerText = "Enviando...";
+            boton.disabled = true;
+
+            // 1. Actualizamos Firebase para que "pagado" sea true
+            db.collection("clinica_hockey").doc(docId).update({
+                pagado: true
+            })
+            .then(() => {
+                // 2. Enviamos el Mail con el QR
+                const templateParams = {
+                    tutorEmail: email,
+                    jugadorNombre: nombre,
+                    idJugador: docId // Esto arma el QR en la plantilla
+                };
+
+                // PONÉ TU SERVICE ID Y EL TEMPLATE ID DEL "TICKET QR"
+                return emailjs.send('service_5l9bx6j', 'template_sdiflnk', templateParams);
+            })
+            .then((response) => {
+                alert("¡Pago aprobado y QR enviado con éxito!");
+            })
+            .catch((error) => {
+                console.error("Error: ", error);
+                alert("Hubo un error al procesar la aprobación.");
+                boton.innerText = "Aprobar Pago y Enviar QR";
+                boton.disabled = false;
+            });
+        }
+
+        // Ejecutar carga inicial
+        cargarInscriptos();
+    </script>
+</body>
+</html>
