@@ -178,16 +178,16 @@
             <div class="fila-doble">
                 <div class="grupo-input">
                     <label>Nombre</label>
-                    <input type="text" id="tutorNombre" placeholder="Ej: Juan" required>
+                    <input type="text" id="tutorNombre" required>
                 </div>
                 <div class="grupo-input">
                     <label>Apellido</label>
-                    <input type="text" id="tutorApellido" placeholder="Ej: Pérez" required>
+                    <input type="text" id="tutorApellido" required>
                 </div>
             </div>
             <div class="grupo-input">
                 <label>Teléfono de Contacto</label>
-                <input type="text" id="tutorTelefono" placeholder="Ej: 1123456789" maxlength="10" inputmode="numeric" required>
+                <input type="text" id="tutorTelefono"  maxlength="10" inputmode="numeric" required>
             </div>
             <div class="grupo-input">
                 <label>Correo Electrónico</label>
@@ -198,16 +198,16 @@
             <div class="fila-doble">
                 <div class="grupo-input">
                     <label>Nombre</label>
-                    <input type="text" id="jugadorNombre" placeholder="Ej: Sofía" required>
+                    <input type="text" id="jugadorNombre" required>
                 </div>
                 <div class="grupo-input">
                     <label>Apellido</label>
-                    <input type="text" id="jugadorApellido" placeholder="Ej: Pérez" required>
+                    <input type="text" id="jugadorApellido"  required>
                 </div>
             </div>
             <div class="grupo-input">
                 <label>Club Actual o Escuela</label>
-                <input type="text" id="jugadorClub" placeholder="Ej: St Brendan's" required>
+                <input type="text" id="jugadorClub" required>
             </div>
             <div class="grupo-input">
                 <label>Posición en la cancha</label>
@@ -232,9 +232,10 @@
             <button type="submit" id="btn-enviar">CONFIRMAR ASISTENCIA</button>
         </form>
 
-        <div class="mensaje-exito" id="alerta-exito">
-            <h2>¡Inscripción Recibida!</h2>
-            <p style="font-size: 15px; text-align: center; margin-bottom: 10px;">¡Gracias por sumarte!</p>
+        <div id="alerta-exito" style="display: none;">
+        <h3>¡Inscripción confirmada!</h3>
+        <p>Te enviamos un correo electrónico con todos los detalles. <strong>Si no lo recibís en unos minutos, por favor revisá tu carpeta de Spam o Correo no deseado.</strong></p>
+        </div>
             
             <div class="bloque-pago">
                 <p style="font-weight: bold; color: #4caf50; font-size: 15px; text-align: center; margin-bottom: 12px;">RESERVA TU LUGAR</p>
