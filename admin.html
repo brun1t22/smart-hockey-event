@@ -149,13 +149,22 @@
     db.collection("clinica_hockey").get().then((snapshot) => {
         let datosExport = snapshot.docs.map(doc => {
             const d = doc.data();
+            
+            // Lógica de estado mejorada
+            let estadoFinal = "Pendiente";
+            if (d.ingresado === true) {
+                estadoFinal = "Ingresado";
+            } else if (d.pagado === true) {
+                estadoFinal = "Aprobado";
+            }
+
             return {
                 "Nombre": d.jugadorNombre,
                 "Apellido": d.jugadorApellido,
                 "Categoría": d.jugadorCategoria,
                 "Tutor": d.tutorNombre,
                 "Teléfono": d.tutorTelefono,
-                "Estado": d.pagado ? "Aprobado" : "Pendiente"
+                "Estado": estadoFinal // Ahora mostrará "Ingresado", "Aprobado" o "Pendiente"
             };
         });
 
