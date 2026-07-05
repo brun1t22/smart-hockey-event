@@ -230,12 +230,12 @@
             </div>
 
             <button type="submit" id="btn-enviar">CONFIRMAR ASISTENCIA</button>
-        </form>
+       </form> <!-- Acá termina tu formulario -->
 
-        <div id="alerta-exito" style="display: none;">
-        <h3>¡Inscripción confirmada!</h3>
-        <p>Te enviamos un correo electrónico con todos los detalles. <strong>Si no lo recibís en unos minutos, por favor revisá tu carpeta de Spam o Correo no deseado.</strong></p>
-        </div>
+        <!-- ACÁ EMPIEZA EL CARTEL FINAL (Oculto por defecto con display: none) -->
+        <div class="mensaje-exito" id="alerta-exito" style="display: none;">
+            <h2>¡Inscripción Recibida!</h2>
+            <p style="font-size: 15px; text-align: center; margin-bottom: 10px;">¡Gracias por sumarte!</p>
             
             <div class="bloque-pago">
                 <p style="font-weight: bold; color: #4caf50; font-size: 15px; text-align: center; margin-bottom: 12px;">RESERVA TU LUGAR</p>
@@ -247,13 +247,18 @@
                 </p>
             </div>
 
+            <!-- AVISO DE SPAM DESTACADO -->
+            <p style="margin-top: 15px; font-size: 13px; color: #ffcc00; text-align: center; background-color: rgba(255, 204, 0, 0.1); padding: 10px; border-radius: 5px;">
+                ⚠️ <strong>Importante:</strong> Si no encontrás nuestro correo en tu bandeja de entrada, por favor revisá tu carpeta de <strong>Spam o Correo No Deseado</strong>.
+            </p>
+
             <div class="info-contacto">
                 <p><strong>¿Necesitás ayuda o más información?</strong></p>
                 <p style="margin-top: 5px;">• WhatsApp: 1128889680</p>
                 <p>• Correo: infosmart.hockey@gmail.com</p>
             </div>
         </div>
-    </div>
+        <!-- ACÁ TERMINA EL CARTEL FINAL -->
 
     <script>
         // ==========================================
