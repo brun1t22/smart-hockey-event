@@ -229,11 +229,33 @@
                 </select>
             </div>
 
-            <button type="submit" id="btn-enviar">CONFIRMAR ASISTENCIA</button>
-       </form> <!-- Acá termina tu formulario -->
+            <div style="margin-bottom: 25px; text-align: left;">
+                <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 15px; color: #ccc; font-size: 14px;">
+                    <input type="checkbox" id="mismo-titular" checked onchange="toggleTitular()" style="width: 18px; height: 18px; margin-right: 10px; cursor: pointer;">
+                    El titular de la cuenta bancaria es el Adulto Responsable
+                </label>
 
-        <!-- ACÁ EMPIEZA EL CARTEL FINAL (Oculto por defecto con display: none) -->
-        <div class="mensaje-exito" id="alerta-exito" style="display: none;">
+                <div id="datos-transferencia" style="display: none; gap: 10px;">
+                    <input type="text" id="titular-nombre" placeholder="Nombre de quien transfiere" style="width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #444; background-color: #222; color: white; font-size: 14px;">
+                    <input type="text" id="titular-apellido" placeholder="Apellido de quien transfiere" style="width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #444; background-color: #222; color: white; font-size: 14px;">
+                </div>
+            </div>
+
+            <script>
+                function toggleTitular() {
+                    const checkbox = document.getElementById("mismo-titular");
+                    const divDatos = document.getElementById("datos-transferencia");
+                    
+                    if (checkbox.checked) {
+                        divDatos.style.display = "none";
+                    } else {
+                        divDatos.style.display = "flex"; 
+                    }
+                }
+            </script>
+
+            <button type="submit" id="btn-enviar">CONFIRMAR ASISTENCIA</button>
+       </form> <div class="mensaje-exito" id="alerta-exito" style="display: none;">
             <h2>¡Inscripción Recibida!</h2>
             <p style="font-size: 15px; text-align: center; margin-bottom: 10px;">¡Gracias por sumarte!</p>
             
@@ -247,7 +269,6 @@
                 </p>
             </div>
 
-            <!-- AVISO DE SPAM DESTACADO -->
             <p style="margin-top: 15px; font-size: 13px; color: #ffcc00; text-align: center; background-color: rgba(255, 204, 0, 0.1); padding: 10px; border-radius: 5px;">
                 ⚠️ <strong>Importante:</strong> Si no encontrás nuestro correo en tu bandeja de entrada, por favor revisá tu carpeta de <strong>Spam o Correo No Deseado</strong>.
             </p>
@@ -258,11 +279,11 @@
                 <p>• Correo: infosmart.hockey@gmail.com</p>
             </div>
         </div>
-        <!-- ACÁ TERMINA EL CARTEL FINAL -->
+        </div>
 
     <script>
         // ==========================================
-        // 1. INICIALIZAR EMAILJS (Poné tu Public Key acá)
+        // 1. INICIALIZAR EMAILJS
         // ==========================================
         (function(){
             emailjs.init("fBOyiVpg9KsCk_TMe"); 
@@ -300,6 +321,25 @@
             const jugadorPosicion = document.getElementById('jugadorPosicion').value;
             const jugadorCategoria = document.getElementById('jugadorCategoria').value;
 
+            // --- NUEVA LÓGICA DE TRANSFERENCIA ---
+            const mismoTitular = document.getElementById('mismo-titular').checked;
+            let nombreTransferencia = tutorNombre;
+            let apellidoTransferencia = tutorApellido;
+
+            // Si NO es el mismo titular, sacamos los nombres de las casillas nuevas
+            if (!mismoTitular) {
+                nombreTransferencia = document.getElementById('titular-nombre').value.trim();
+                apellidoTransferencia = document.getElementById('titular-apellido').value.trim();
+
+                if (!nombreTransferencia || !apellidoTransferencia) {
+                    alert("Por favor, completá los datos de quien realiza la transferencia.");
+                    boton.innerText = "CONFIRMAR ASISTENCIA";
+                    boton.disabled = false;
+                    return;
+                }
+            }
+            // -------------------------------------
+
             if (!tutorNombre || !tutorApellido || !tutorTelefono || !tutorEmail || !jugadorNombre || !jugadorApellido || !jugadorClub || !jugadorPosicion || !jugadorCategoria) {
                 alert("Por favor, completá todos los campos.");
                 boton.innerText = "CONFIRMAR ASISTENCIA";
@@ -317,6 +357,8 @@
                 jugadorClub: jugadorClub,
                 jugadorPosicion: jugadorPosicion,
                 jugadorCategoria: jugadorCategoria,
+                titularPagoNombre: nombreTransferencia, // <-- Agregado a la base de datos
+                titularPagoApellido: apellidoTransferencia, // <-- Agregado a la base de datos
                 pagado: false, 
                 ingreso: false, 
                 fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
@@ -326,7 +368,7 @@
             db.collection("clinica_hockey").add(datosInscripcion)
             .then(function(docRef) {
                 
-                // Manda el mail con EmailJS usando las variables
+                // Manda el mail con EmailJS
                 const templateParams = {
                     tutorEmail: tutorEmail,
                     tutorNombre: tutorNombre,
@@ -334,7 +376,6 @@
                     jugadorApellido: jugadorApellido
                 };
 
-                // Poné tu Service ID y tu Template ID acá
                 return emailjs.send('service_5l9bx6j', 'template_7gz836l', templateParams);
             })
             .then(function(response) {
